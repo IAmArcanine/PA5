@@ -2,7 +2,7 @@
 #define RANGE 10000
 int main(int argc, char *argv[]){
 	int n         = 0;
-	int n_threads = 0;
+	int p = 0;
 	int in = 0;
 	if (argc < 3){
 		printUsage();
@@ -10,14 +10,16 @@ int main(int argc, char *argv[]){
 	}
 	//first arg is n, second is #of threads
 	n         = atoi(argv[1]);
-	n_threads = atoi(argv[2]);
+	p = atoi(argv[2]);
 
-	omp_set_num_threads(n_threads);
+	omp_set_num_threads(p);
 
 	//1) Throw n darts
 	double time = omp_get_wtime();
-#pragma omp parallel for shared(n) reduction(+:in)
+
+	#pragma omp parallel for shared(n) reduction(+:in)
 	for (int i = 0; i < n; i++){
+		int rank = omp_get_thread_num();
 	// generate rand x and y between 0 and 1
 		double x = (double)(rand() %RANGE)/RANGE;
 		double y = (double)(rand() %RANGE)/RANGE;
@@ -26,7 +28,9 @@ int main(int argc, char *argv[]){
 			in++;
 		}
 		//else printf("out\n");
+		//printf("thread[%d] has i: %d, in: %d\n", rank, i, in);
 	}
+	printf("after loop: n = %d\n", in);
 	//2) what fraction of time did the darts land in teh circle
 	//printf("in: %d, total: %d\n",in, n);
 	double frac = (double)in/(double)n;
@@ -36,6 +40,6 @@ int main(int argc, char *argv[]){
 	double pi_aprx = frac * 4.0;
 	time = omp_get_wtime() - time;
 
-	printf("π = %f\n#threads: %d, time: %f seconds\n", pi_aprx, n_threads, time);
+	printf("π = %f\n#threads: %d, time: %f seconds\n", pi_aprx, p, time);
 	return 0;
 }
